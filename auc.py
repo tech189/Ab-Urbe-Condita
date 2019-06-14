@@ -4,10 +4,6 @@ import datetime, math        # calculating dates
 import json, urllib.request  # getting and parsing sunrise/set data
 import sys                   # commandline arguments
 
-
-# for testing: TODO move to cmdarg
-# today = datetime.datetime(2019, 6, 12, 2, 59, 48)
-
 help_text = "Converts dates into a Roman format\n\t--help\t\tshows this help text\n\t--now\t\tconvert current date and time\n\t--custom\t\tconvert a custom date (ISO 8601)\n\t--simple\t\tonly print the Roman format"
 
 roman_months = ["Januarius", "Februarius", "Martius", "Aprilis", "Maius", "Junius", "Quintilius", "Sextilis", "September", "October", "November", "December"]
