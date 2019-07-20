@@ -32,8 +32,6 @@ def int_to_roman(num):
                 break
     return result
 
-today = datetime.datetime.now()
-
 def get_year(input_date):
     # AUC = 21 April 752 BC
 
@@ -49,6 +47,10 @@ def get_year(input_date):
     return int_to_roman(auc)
 
 def get_day(input_date):
+    result = "dies " + weekdays[input_date.weekday()]
+    return result
+
+def get_date(input_date):
     kalends = input_date.replace(day=1)
 
     if input_date.month in [3, 5, 7, 10]:
@@ -64,7 +66,6 @@ def get_day(input_date):
         kalends2_delta = input_date - kalends2
         # print(kalends2, kalends2_delta)
 
-    kalends_delta = input_date - kalends
     nones_delta = input_date - nones
     ides_delta = input_date - ides
 
@@ -88,10 +89,8 @@ def get_day(input_date):
         day = "Idus " + months_genitive[input_date.month - 1]
     else:
         day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[input_date.month]
-
-    result = "dies " + weekdays[input_date.weekday()] + ", " + day
-
-    return result
+    
+    return day
 
 def get_time(input_date):
     # get sunrise/sunset from internet, then work out length of hour
@@ -157,22 +156,37 @@ else:
         output["help"] = help_text
     elif "--now" in sys.argv:
         input_date = datetime.datetime.now()
-        output["normal"] = today.strftime("%H:%M, %A, %d %B %Y AD")
-        output["roman"] = get_time(input_date) + ", " + get_day(input_date) + " " + get_year(input_date) + " AUC"
+        if "--json" not in sys.argv:
+            output["normal"] = input_date.strftime("%H:%M, %A, %d %B %Y AD")
+            output["roman"] = get_time(input_date) + ", " + get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
+        else:
+            output["data"] = json.dumps({
+                "normal": {
+                    "time": input_date.strftime("%H:%M"),
+                    "day": input_date.strftime("%A"),
+                    "date": input_date.strftime("%d %B %Y AD")
+                },
+                "roman": {
+                    "time": get_time(input_date),
+                    "day": get_day(input_date),
+                    "date": get_date(input_date),
+                    "year": get_year(input_date) + " AUC"
+                }
+            })
     if "--custom" in sys.argv:
         try:
             test = output["normal"]
-            print("Please use either now or custom date")
+            print("Please use either --now or --custom date")
             sys.exit()
         except KeyError:
-            # custom time not supported
+            # TODO custom time not supported
             try:
                 input_date = datetime.datetime.fromisoformat(sys.argv[sys.argv.index("--custom") + 1])
             except:
                 print("Date not in ISO 8601 format")
                 sys.exit()
             output["normal"] = input_date.strftime("%d %B %Y AD")
-            output["roman"] = get_day(input_date) + " " + get_year(input_date) + " AUC"
+            output["roman"] = get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
     
     if "--simple" in sys.argv:
         try:
