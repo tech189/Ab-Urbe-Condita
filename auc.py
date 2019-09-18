@@ -3,6 +3,21 @@
 import datetime, math        # calculating dates
 import json, urllib.request  # getting and parsing sunrise/set data
 import sys                   # commandline arguments
+import os                    # get start dir
+import logging               # debugging
+
+logger = logging.getLogger()
+handler = logging.StreamHandler(sys.stdout)
+
+# to debug - add debug argument
+if "--debug" in sys.argv:
+    logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(levelname)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+start_dir = os.path.dirname(os.path.realpath(__file__))
 
 help_text = "Converts dates into a Roman format\n\t--help\t\tshows this help text\n\t--now\t\tconvert current date and time\n\t--custom\t\tconvert a custom date (ISO 8601)\n\t--simple\t\tonly print the Roman format"
 
@@ -30,6 +45,7 @@ def int_to_roman(num):
                     result += _strings[i]
                 decimal -= _values[i]
                 break
+    logging.debug(f"{num} --> {result}")
     return result
 
 def get_year(input_date):
@@ -64,14 +80,14 @@ def get_date(input_date):
         kalends2 = input_date + datetime.timedelta(days = 20)
         kalends2 = kalends2.replace(day = 1)
         kalends2_delta = input_date - kalends2
-        # print(kalends2, kalends2_delta)
+        logger.debug(f"\n Next month's Kalends: {str(kalends2)}\n Next month's Kalends' delta:{kalends2_delta}")
 
     nones_delta = input_date - nones
     ides_delta = input_date - ides
 
     # for debugging:
-    # print(kalends, nones, ides)
-    # print(kalends_delta, nones_delta, ides_delta)
+    logger.debug(f"\n Kalends: {kalends}\n Nones: {nones}\n Ides: {ides}")
+    logger.debug(f"\n Nones' delta: {str(nones_delta)}\n Ides' delta: {str(ides_delta)}")
 
     # roman date goes to the closest marker in the future not the past, also need to check delta of the kalends of the next month!
     # plus one because Romans counted inclusively...
@@ -96,17 +112,35 @@ def get_time(input_date):
     # get sunrise/sunset from internet, then work out length of hour
 
     # cache data for a whole day, then get new data when day changes
+    if not os.path.exists(os.path.join(start_dir, "cache")):
+        os.mkdir(os.path.join(start_dir, "cache"))
     try:
-        with open("sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json", "r", encoding="utf-8") as response:
+        logger.debug("Checking if today's data is cached")
+        with open(os.path.join(start_dir, "cache", "sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json"), "r", encoding="utf-8") as response:
             data = response.read()
             jsondata = json.loads(data)
     except:
-        # requests the data for the current day of timezone - ISO 8601 format
-        response = urllib.request.urlopen("https://api.sunrise-sunset.org/json?lat=51.509865&lng=-0.118092&formatted=0&date=" + input_date.strftime("%Y-%m-%d"))
-        with open("sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json", "w", encoding="utf-8") as outfile:
-            data = response.read().decode("utf-8")
-            jsondata = json.loads(data)
-            json.dump(jsondata, outfile)
+        try:
+            # requests the data for the current day of timezone - ISO 8601 format
+            # TODO do not hardcode location - currently London
+            logger.debug("Getting data from internet")
+            response = urllib.request.urlopen("https://api.sunrise-sunset.org/json?lat=51.509865&lng=-0.118092&formatted=0&date=" + input_date.strftime("%Y-%m-%d"))
+            logger.debug("Writing data to file")
+            with open(os.path.join(start_dir, "cache", "sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json"), "w", encoding="utf-8") as outfile:
+                data = response.read().decode("utf-8")
+                jsondata = json.loads(data)
+                json.dump(jsondata, outfile)
+        except:
+            try:
+                logger.debug("Trying to open yesterday's sunrise/set data since network probably down")
+                yesterday = input_date - datetime.timedelta(days=1)
+                with open(os.path.join(start_dir, "cache", "sunrisesunset-" + yesterday.strftime("%Y%m%d") + ".json"), "r", encoding="utf-8") as response:
+                    data = response.read()
+                    jsondata = json.loads(data)
+            except:
+                logger.debug("No internet access and no fallback data files")
+                print("No internet access and no fallback data files, program exiting...")
+                exit()
 
     sunrise = datetime.datetime.fromisoformat(jsondata["results"]["sunrise"])
     local_timezone = datetime.datetime.now().astimezone().tzinfo
@@ -117,14 +151,14 @@ def get_time(input_date):
     sunset = sunset.astimezone(local_timezone)
 
     input_date = input_date.replace(tzinfo=local_timezone)
-    # print(input_date, sunrise, sunset)
+    logger.debug(f"\n Input date: {input_date}\n Sunrise: {sunrise}\n Sunset: {sunset}")
 
     day_duration = sunset - sunrise
     hour_length = day_duration/12
     midday = sunrise + (day_duration/2)
     morning_portion = input_date - sunrise
     afternoon_portion = sunset - input_date
-    # print(hour_length, midday, morning_portion, afternoon_portion)
+    logger.debug(f"\n Hour length: {hour_length}\n Midday: {midday}\n Morning length: {morning_portion}\n Afternoon length:  {afternoon_portion}")
 
     if input_date < sunrise:
         hour = int_to_roman(math.floor(abs(morning_portion/hour_length)) + 1)
