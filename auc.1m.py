@@ -7,7 +7,7 @@ import json
 
 
 time = datetime.datetime.now()
-romanjson = json.loads(urllib.request.urlopen("http://www.tech189.duckdns.org/auc?json=true").read().decode("utf-8"))
+romanjson = json.loads(urllib.request.urlopen("https://www.tech189.duckdns.org/auc?json=true").read().decode("utf-8"))
 
 print(time.strftime("%a %-d %b"))
 print("---")
