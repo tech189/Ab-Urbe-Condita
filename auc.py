@@ -191,14 +191,14 @@ else:
     elif "--now" in sys.argv:
         input_date = datetime.datetime.now()
         if "--json" not in sys.argv:
-            output["normal"] = input_date.strftime("%H:%M, %A, %d %B %Y AD")
+            output["normal"] = input_date.strftime("%H:%M, %A, %-d %B %Y AD")
             output["roman"] = get_time(input_date) + ", " + get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
         else:
             output["data"] = json.dumps({
                 "normal": {
                     "time": input_date.strftime("%H:%M"),
                     "day": input_date.strftime("%A"),
-                    "date": input_date.strftime("%d %B %Y AD")
+                    "date": input_date.strftime("%-d %B %Y AD")
                 },
                 "roman": {
                     "time": get_time(input_date),
@@ -219,7 +219,7 @@ else:
             except:
                 print("Date not in ISO 8601 format")
                 sys.exit()
-            output["normal"] = input_date.strftime("%d %B %Y AD")
+            output["normal"] = input_date.strftime("%A %-d %B %Y AD")
             output["roman"] = get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
     
     if "--simple" in sys.argv:
