@@ -27,7 +27,7 @@ update: (output, domEl) ->
 
   data = JSON.parse(output)
 
-  $(domEl).find(".normal").text data["normal"]["date"]
+  $(domEl).find(".normal").text data["normal"]["day"] + ", " + data["normal"]["date"]
   $(domEl).find(".time").text data["roman"]["time"]
   $(domEl).find(".day").text data["roman"]["day"]
   $(domEl).find(".date").text data["roman"]["date"]
