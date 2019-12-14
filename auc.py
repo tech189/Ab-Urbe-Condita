@@ -80,14 +80,14 @@ def get_date(input_date):
         kalends2 = input_date + datetime.timedelta(days = 20)
         kalends2 = kalends2.replace(day = 1)
         kalends2_delta = input_date - kalends2
-        logger.debug(f"\n Next month's Kalends: {str(kalends2)}\n Next month's Kalends' delta:{kalends2_delta}")
+        logger.debug(f"\n Next month's Kalends:        {str(kalends2)}\n Next month's Kalends' delta: {kalends2_delta}")
 
     nones_delta = input_date - nones
     ides_delta = input_date - ides
 
     # for debugging:
-    logger.debug(f"\n Kalends: {kalends}\n Nones: {nones}\n Ides: {ides}")
-    logger.debug(f"\n Nones' delta: {str(nones_delta)}\n Ides' delta: {str(ides_delta)}")
+    logger.debug(f"\n Kalends: {kalends}\n Nones:   {nones}\n Ides:    {ides}")
+    logger.debug(f"\n Nones' delta: {str(nones_delta)}\n Ides' delta:  {str(ides_delta)}")
 
     # roman date goes to the closest marker in the future not the past, also need to check delta of the kalends of the next month!
     # plus one because Romans counted inclusively...
@@ -104,7 +104,11 @@ def get_date(input_date):
     elif input_date.day == ides.day:
         day = "Idus " + months_genitive[input_date.month - 1]
     else:
-        day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[input_date.month]
+        # loop back to January if counting days until next month in December
+        if input_date.month == 12:
+            day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[0]
+        else:
+            day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[input_date.month]
     
     return day
 
@@ -151,14 +155,14 @@ def get_time(input_date):
     sunset = sunset.astimezone(local_timezone)
 
     input_date = input_date.replace(tzinfo=local_timezone)
-    logger.debug(f"\n Input date: {input_date}\n Sunrise: {sunrise}\n Sunset: {sunset}")
+    logger.debug(f"\n Input date: {input_date}\n Sunrise:    {sunrise}\n Sunset:     {sunset}")
 
     day_duration = sunset - sunrise
     hour_length = day_duration/12
     midday = sunrise + (day_duration/2)
     morning_portion = input_date - sunrise
     afternoon_portion = sunset - input_date
-    logger.debug(f"\n Hour length: {hour_length}\n Midday: {midday}\n Morning length: {morning_portion}\n Afternoon length:  {afternoon_portion}")
+    logger.debug(f"\n Hour length:      {hour_length}\n Midday:           {midday}\n Morning length:   {morning_portion}\n Afternoon length: {afternoon_portion}")
 
     if input_date < sunrise:
         hour = int_to_roman(math.floor(abs(morning_portion/hour_length)) + 1)
@@ -192,7 +196,7 @@ else:
         input_date = datetime.datetime.now()
         if "--json" not in sys.argv:
             output["normal"] = input_date.strftime("%H:%M, %A, %-d %B %Y AD")
-            output["roman"] = get_time(input_date) + ", " + get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
+            output["roman"] = get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
         else:
             output["data"] = json.dumps({
                 "normal": {
@@ -220,7 +224,7 @@ else:
                 print("Date not in ISO 8601 format")
                 sys.exit()
             output["normal"] = input_date.strftime("%A %-d %B %Y AD")
-            output["roman"] = get_day(input_date) + ", " + get_date(input_date) + " " + get_year(input_date) + " AUC"
+            output["roman"] = get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
     
     if "--simple" in sys.argv:
         try:
