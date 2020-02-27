@@ -1,10 +1,10 @@
 # this script requires python 3.7+
 
-import datetime, math        # calculating dates
-import json, urllib.request  # getting and parsing sunrise/set data
-import sys                   # commandline arguments
-import os                    # get start dir
-import logging               # debugging
+import datetime, calendar, math     # calculating dates
+import json, urllib.request         # getting and parsing sunrise/set data
+import sys                          # commandline arguments
+import os                           # get start dir
+import logging                      # debugging
 
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
@@ -21,16 +21,15 @@ start_dir = os.path.dirname(os.path.realpath(__file__))
 
 help_text = "Converts dates into a Roman format\n\t--help\t\tshows this help text\n\t--now\t\tconvert current date and time\n\t--custom\t\tconvert a custom date (ISO 8601)\n\t--simple\t\tonly print the Roman format"
 
-roman_months = ["Januarius", "Februarius", "Martius", "Aprilis", "Maius", "Junius", "Quintilis", "Sextilis", "September", "October", "November", "December"]
-#months_genitive = ["Januarii", "Februarii", "Martii", "Aprilis", "Maii", "Junii", "Quintilii", "Sextilis", "Septembris", "Octobris", "Novembris", "Decembris"]
-# The genetives are not really needed. Instead we need the accusative plural feminine (Kalendae, Nonae and Idus are all fem)
-# months_accusative = ["Januarias", "Februarias", "Martias", "Apriles", "Majas", "Junias", "Quintiles", "Sextiles", "Septembres", "Octobres", "Novembres", "Decembres"]
-# though if you really want to be idiomatic, you would probably want to use abbreviations:
-months_acc_abr = ["Jan.", "Feb.", "Mar.", "Apr.", "Maj.", "Jun.", "Qui.", "Sex.", "Sep.", "Oct.", "Nov.", "Dec."] # etc
+# roman months in the accusative form
+months_acc = ["Januarias", "Februarias", "Martias", "Apriles", "Majas", "Junias", "Quintiles", "Sextiles", "Septembres", "Octobres", "Novembres", "Decembres"]
+# idiomatic abbreviations:
+months_acc_abbr = ["Jan.", "Feb.", "Mar.", "Apr.", "Maj.", "Jun.", "Qui.", "Sex.", "Sep.", "Oct.", "Nov.", "Dec."]
+
 weekdays = ["Lunae", "Martis", "Mercurii", "Jovis", "Veneris", "Saturni", "Solis"]
 
 def int_to_roman(num):
-    # https://stackoverflow.com/a/50012689
+    # shamelessly stolen from https://stackoverflow.com/a/50012689
     _values = [
         1000000, 900000, 500000, 400000, 100000, 90000, 50000, 40000, 10000, 9000, 5000, 4000, 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
 
@@ -95,42 +94,72 @@ def get_date(input_date):
 
     # roman date goes to the closest marker in the future not the past, also need to check delta of the kalends of the next month!
     # plus one because Romans counted inclusively...
-
-       # the idiomatic formulation is e.g.: "ante diem IV Kalendas Majas" though the the latter two words were normally abbreviated to
-       # Kal. Maj. (or Non. for the Nonae and Id. for the Idus) and "ante diem" becomes a.d.
     
-        # If, however, something occurs on one of the principal three days, you use the ablative of time when:
-        # Kalendis, Nonibus, Idibus (though these are often abbreviated in the same way to Kal. Non. Id.)
-    
-       # the other thing to bear in mind that ante diem II is called Pridie (normally abbreviated to Prid. so you'll need to 
-       # incorporate a condition to catch this
-    
-       # so my suggestion for this bit would look something like this (tho please bear in mind I haven't coded in Python before 
-       # (I think...! Will need to test it)
-    
-    if input_date.day == 1:
-        day = "Kal. " + months_acc_abbr[input_date.month - 1] # if this is what is being outputted
-    elif input_date.day < nones.day - 1: # so we can catch Prid.
-        day = "a.d. " + int_to_roman(abs(nones_delta.days) + 1) + " Non. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.dat == nones.day - 1:
-        day = "Prid. Non. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.day == nones.day:
-        day = "Non. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.day < ides.day - 1:
-        day = "a.d. " + int_to_roman(abs(ides_delta.days) + 1) + " Id. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.day == ides.day - 1:
-        day = "Prid. Id. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.day == ides.day:
-        day = "Id. " + months_acc_abbr[input_date.month - 1]
-    elif input_date.day == 
-    # need something for the last day of the month (that takes account of Feb in leap years) so you can get Pridie Kalendas (Prid. Kal.)
+    if "--idiomatic" in sys.argv:
+        if input_date.day == 1:
+            day = "Kal. " + months_acc_abbr[input_date.month - 1]
         
-    else:
+        elif input_date.day < nones.day - 1:
+            day = "a.d. " + int_to_roman(abs(nones_delta.days) + 1) + " Non. " + months_acc_abbr[input_date.month - 1]
+        elif input_date.day == nones.day - 1:
+            day = "prid. Non. " + months_acc_abbr[input_date.month - 1]
+        elif input_date.day == nones.day:
+            day = "Non. " + months_acc_abbr[input_date.month - 1]
+        
+        elif input_date.day < ides.day - 1:
+            day = "a.d. " + int_to_roman(abs(ides_delta.days) + 1) + " Id. " + months_acc_abbr[input_date.month - 1]
+        elif input_date.day == ides.day - 1:
+            day = "prid. Id. " + months_acc_abbr[input_date.month - 1]
+        elif input_date.day == ides.day:
+            day = "Id. " + months_acc_abbr[input_date.month - 1]
+
+        # if last day of month (works for leap years!)
+        elif input_date.day == calendar.monthrange(input_date.year, input_date.month)[1]:
+            if input_date.month == 12:
+                day = "prid. Kal. " + months_acc_abbr[0]
+            else:
+                day = "prid. Kal. " + months_acc_abbr[input_date.month] 
+        
         # loop back to January if counting days until next month in December
-        if input_date.month == 12:
-            day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[0]
         else:
-            day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
+            if input_date.month == 12:
+                day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[0]
+            else:
+                day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
+
+    # if the user does not want an idiomatic date:
+    # probably a shorter way to do this but ¯\_(ツ)_/¯
+    else:
+        if input_date.day == 1:
+            day = "Kalendis " + months_acc[input_date.month - 1]
+        
+        elif input_date.day < nones.day - 1:
+            day = "ante diem " + int_to_roman(abs(nones_delta.days) + 1) + " Nonas " + months_acc[input_date.month - 1]
+        elif input_date.day == nones.day - 1:
+            day = "pridie Nonas " + months_acc[input_date.month - 1]
+        elif input_date.day == nones.day:
+            day = "Nonibus " + months_acc[input_date.month - 1]
+        
+        elif input_date.day < ides.day - 1:
+            day = "ante diem " + int_to_roman(abs(ides_delta.days) + 1) + " Idus " + months_acc[input_date.month - 1]
+        elif input_date.day == ides.day - 1:
+            day = "pridie Idus " + months_acc[input_date.month - 1]
+        elif input_date.day == ides.day:
+            day = "Idus " + months_acc[input_date.month - 1]
+
+        # if last day of month (works for leap years!)
+        elif input_date.day == calendar.monthrange(input_date.year, input_date.month)[1]:
+            if input_date.month == 12:
+                day = "pridie Kalendas " + months_acc[0]
+            else:
+                day = "pridie Kalendas " + months_acc[input_date.month] 
+        
+        # loop back to January if counting days until next month in December
+        else:
+            if input_date.month == 12:
+                day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendas " + months_acc[0]
+            else:
+                day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendas " + months_acc[input_date.month]
     
     return day
 
@@ -207,6 +236,11 @@ def get_time(input_date):
     
     return time
 
+# TODO clean up this mess of an argument parser so that the functions are entirely separate from the arguments
+    # i.e. so that in theory this python file could be imported and the functions could be used on their own - at the moment
+    # the get_date() function must check if there is a --idiomatic argument, ideally the definition of the get_date() function
+    # would be something like: def get_date(input_date, idiomatic = True)
+
 output = {}
 
 if len(sys.argv) < 2:
@@ -243,6 +277,8 @@ else:
             try:
                 input_date = datetime.datetime.fromisoformat(sys.argv[sys.argv.index("--custom") + 1])
             except:
+                # TODO dates before AD 1 (i.e. 1 BC and earlier) are refused
+                # TODO dates after 9999-12-13 are not supported by the datetime library :(
                 print("Date not in ISO 8601 format")
                 sys.exit()
             output["normal"] = input_date.strftime("%A %-d %B %Y AD")
