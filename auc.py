@@ -21,9 +21,13 @@ start_dir = os.path.dirname(os.path.realpath(__file__))
 
 help_text = "Converts dates into a Roman format\n\t--help\t\tshows this help text\n\t--now\t\tconvert current date and time\n\t--custom\t\tconvert a custom date (ISO 8601)\n\t--simple\t\tonly print the Roman format"
 
-roman_months = ["Januarius", "Februarius", "Martius", "Aprilis", "Maius", "Junius", "Quintilius", "Sextilis", "September", "October", "November", "December"]
-months_genitive = ["Januarii", "Februarii", "Martii", "Aprilis", "Maii", "Junii", "Quintilii", "Sextilis", "Septembris", "Octobris", "Novembris", "Decembris"]
-weekdays = ["Lunae", "Martis", "Mercurii", "Iovis", "Veneris", "Saturni", "Solis"]
+roman_months = ["Januarius", "Februarius", "Martius", "Aprilis", "Maius", "Junius", "Quintilis", "Sextilis", "September", "October", "November", "December"]
+#months_genitive = ["Januarii", "Februarii", "Martii", "Aprilis", "Maii", "Junii", "Quintilii", "Sextilis", "Septembris", "Octobris", "Novembris", "Decembris"]
+# The genetives are not really needed. Instead we need the accusative plural feminine (Kalendae, Nonae and Idus are all fem)
+# months_accusative = ["Januarias", "Februarias", "Martias", "Apriles", "Majas", "Junias", "Quintiles", "Sextiles", "Septembres", "Octobres", "Novembres", "Decembres"]
+# though if you really want to be idiomatic, you would probably want to use abbreviations:
+months_acc_abr = ["Jan.", "Feb.", "Mar.", "Apr.", "Maj.", "Jun.", "Qui.", "Sex.", "Sep.", "Oct.", "Nov.", "Dec."] # etc
+weekdays = ["Lunae", "Martis", "Mercurii", "Jovis", "Veneris", "Saturni", "Solis"]
 
 def int_to_roman(num):
     # https://stackoverflow.com/a/50012689
@@ -92,23 +96,41 @@ def get_date(input_date):
     # roman date goes to the closest marker in the future not the past, also need to check delta of the kalends of the next month!
     # plus one because Romans counted inclusively...
 
-
+       # the idiomatic formulation is e.g.: "ante diem IV Kalendas Majas" though the the latter two words were normally abbreviated to
+       # Kal. Maj. (or Non. for the Nonae and Id. for the Idus) and "ante diem" becomes a.d.
+    
+        # If, however, something occurs on one of the principal three days, you use the ablative of time when:
+        # Kalendis, Nonibus, Idibus (though these are often abbreviated in the same way to Kal. Non. Id.)
+    
+       # the other thing to bear in mind that ante diem II is called Pridie (normally abbreviated to Prid. so you'll need to 
+       # incorporate a condition to catch this
+    
+       # so my suggestion for this bit would look something like this (tho please bear in mind I haven't coded in Python before 
+       # (I think...! Will need to test it)
+    
     if input_date.day == 1:
-        day = "kalends " + months_genitive[input_date.month - 1]
-    elif input_date.day < nones.day:
-        day = "diem " + int_to_roman(abs(nones_delta.days) + 1) + " ante Nonas " + months_genitive[input_date.month - 1]
+        day = "Kal. " + months_acc_abbr[input_date.month - 1] # if this is what is being outputted
+    elif input_date.day < nones.day - 1: # so we can catch Prid.
+        day = "a.d. " + int_to_roman(abs(nones_delta.days) + 1) + " Non. " + months_acc_abbr[input_date.month - 1]
+    elif input_date.dat == nones.day - 1:
+        day = "Prid. Non. " + months_acc_abbr[input_date.month - 1]
     elif input_date.day == nones.day:
-        day = "Nones " + months_genitive[input_date.month - 1]
-    elif input_date.day < ides.day:
-        day = "diem " + int_to_roman(abs(ides_delta.days) + 1) + " ante Idus " + months_genitive[input_date.month - 1]
+        day = "Non. " + months_acc_abbr[input_date.month - 1]
+    elif input_date.day < ides.day - 1:
+        day = "a.d. " + int_to_roman(abs(ides_delta.days) + 1) + " Id. " + months_acc_abbr[input_date.month - 1]
+    elif input_date.day == ides.day - 1:
+        day = "Prid. Id. " + months_acc_abbr[input_date.month - 1]
     elif input_date.day == ides.day:
-        day = "Idus " + months_genitive[input_date.month - 1]
+        day = "Id. " + months_acc_abbr[input_date.month - 1]
+    elif input_date.day == 
+    # need something for the last day of the month (that takes account of Feb in leap years) so you can get Pridie Kalendas (Prid. Kal.)
+        
     else:
         # loop back to January if counting days until next month in December
         if input_date.month == 12:
-            day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[0]
+            day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[0]
         else:
-            day = "diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " ante Kalendas " + months_genitive[input_date.month]
+            day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
     
     return day
 
