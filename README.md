@@ -29,21 +29,31 @@ python auc.py --custom 1234-05-06
 
 ## Widgets!
 
-There are widgets for both Windows and macOS - if you're stuck installing them feel free to raise an issue [here](https://github.com/tech189/Ab-Urbe-Condita/issues)
+There are desktop widgets for both Windows and macOS - if you're stuck installing them feel free to raise an issue [here](https://github.com/tech189/Ab-Urbe-Condita/issues). For now, updating the widgets is a manual process until I figure out some kind of automatic update checker ([see issue #7](https://github.com/tech189/Ab-Urbe-Condita/issues/7)).
 
-## Rainmeter Widget (Windows)
+### Rainmeter Widget (Windows)
+
+#### Step by step
 
 1. (Install [Rainmeter](https://www.rainmeter.net/) and open it at least once)
-2. Download `AUCRainmeterWidget.ini` from this repository ([here](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/AUCRainmeterWidget.ini))
+2. Download `AUCRainmeterWidget.ini` from [here](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/AUCRainmeterWidget.ini) (you can download it by right-clicking the link and pressing "Save Link As...")
 3. Find your Rainmeter skins folder (usually in `%USERPROFILE%\Documents\Rainmeter\Skins`)
 4. Create a new folder (e.g. tech189) and place the downloaded `.ini` file into it
 5. Right click the Rainmeter icon on the taskbar in the notification area and press "Refresh all"
 6. Right click the Rainmeter icon again and click on "Skins" then "tech189" (the name of the folder created in step 3) and select `AUCRainmeterWidget.ini`
-7. The widget should appear on your desktop for you to move around
+7. The updated widget should appear on your desktop
 
-## Übersicht Widget (macOS)
+#### Updating
 
-### Summary
+1. Find your Rainmeter skins folder (usually in `%USERPROFILE%\Documents\Rainmeter\Skins`)
+2. Open the folder where you placed `AUCRainmeterWidget.ini` and delete the old .ini file
+3. Copy into this folder [`AUCRainmeterWidget.ini`](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/AUCRainmeterWidget.ini) (you can download it by right-clicking the link and pressing "Save Link As...")
+4. Right click the Rainmeter icon on the taskbar in the notification area and press "Refresh all"
+5. The updated widget should appear on your desktop for you to move around
+
+### Übersicht Widget (macOS)
+
+#### Summary
 
 - Install [Python 3](https://www.python.org/) and [Übersicht](http://tracesof.net/uebersicht/) via [Homebrew](https://brew.sh):
 
@@ -58,7 +68,7 @@ There are widgets for both Windows and macOS - if you're stuck installing them f
 - Übersicht menu bar > Refresh All Widgets
 - Übersicht menu bar > Preferences... > Launch Übersicht when I login
 
-### Step by step
+#### Step by step
 
 1. Open Terminal (command+space to search, then type `terminal`, and press enter)
 2. Go to the [Homebrew website](https://brew.sh) and copy and paste the installation command into the Terminal window:
@@ -78,8 +88,15 @@ There are widgets for both Windows and macOS - if you're stuck installing them f
 6. Click on the Übersicht menubar icon at the top of your screen (a 'u' with glasses on top), then on "Open Widgets Folder"
 7. Delete the files in the folder you just opened
 8. Create a new folder called "ab-urbe-condita.widget" and copy into it [auc.coffee](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/auc.coffee) and [auc.py](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/auc.py) (you can download them by right-clicking these links and pressing "Save Link As...")
-9. Click on the Übersicht menubar icon again and click "Refresh All Widgets", the AUC widget should appear by this point if it hadn't already.
+9. Click on the Übersicht menubar icon again and click "Refresh All Widgets", the AUC widget should appear on your desktop by this point if it hadn't already.
 10. Finally click on the Übersicht menubar icon for the last time and open its "Preferences..." option, then tick "Launch Übersicht when I login" to make sure the widget loads at start-up!
+
+#### Updating
+
+1. Click on the Übersicht menubar icon and click "Open Widgets Folder"
+2. Open the "ab-urbe-condita.widget" folder and delete the old auc.coffee and auc.py files inside it
+3. Copy into this folder [auc.coffee](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/auc.coffee) and [auc.py](https://raw.githubusercontent.com/tech189/Ab-Urbe-Condita/master/auc.py) (you can download them by right-clicking these links and pressing "Save Link As...")
+4. Click on the Übersicht menubar icon again and click "Refresh All Widgets", the AUC widget should refresh and the updated files should work
 
 <!-- 
 ## BitBar Plugin (macOS)
