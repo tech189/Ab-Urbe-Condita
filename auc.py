@@ -251,14 +251,14 @@ else:
     elif "--now" in sys.argv:
         input_date = datetime.datetime.now()
         if "--json" not in sys.argv:
-            output["normal"] = input_date.strftime("%H:%M, %A, %-d %B %Y AD")
+            output["normal"] = input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD")
             output["roman"] = get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
         else:
             output["data"] = json.dumps({
                 "normal": {
                     "time": input_date.strftime("%H:%M"),
                     "day": input_date.strftime("%A"),
-                    "date": input_date.strftime("%-d %B %Y AD")
+                    "date": input_date.strftime(f"{input_date.day} %B %Y AD")
                 },
                 "roman": {
                     "time": get_time(input_date),
@@ -281,7 +281,7 @@ else:
                 # TODO dates after 9999-12-13 are not supported by the datetime library :(
                 print("Date not in ISO 8601 format")
                 sys.exit()
-            output["normal"] = input_date.strftime("%A %-d %B %Y AD")
+            output["normal"] = input_date.strftime(f"%A {input_date.day} %B %Y AD")
             output["roman"] = get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
     
     if "--simple" in sys.argv:
