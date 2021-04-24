@@ -120,10 +120,18 @@ def get_date(input_date):
             else:
                 day = "prid. Kal. " + months_acc_abbr[input_date.month] 
         
-        # loop back to January if counting days until next month in December
+        # loop back to January if counting days until next month in December and leap year check
         else:
             if input_date.month == 12:
                 day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[0]
+            elif input_date.month == 2 and input_date.day == 24:
+                try:
+                    # try for leap year
+                    input_date.replace(day=29)
+                    day = "a.d. bis VI Kal. Mar."
+                except ValueError:
+                    # not a leap year
+                    day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
             else:
                 day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
 
@@ -154,10 +162,18 @@ def get_date(input_date):
             else:
                 day = "pridie Kalendas " + months_acc[input_date.month] 
         
-        # loop back to January if counting days until next month in December
+        # loop back to January if counting days until next month in December and leap year check
         else:
             if input_date.month == 12:
                 day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendas " + months_acc[0]
+            elif input_date.month == 2 and input_date.day == 24:
+                try:
+                    # try for leap year
+                    input_date.replace(day=29)
+                    day = "ante diem bis VI Kalendas Martias"
+                except ValueError:
+                    # not a leap year
+                    day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendas " + months_acc_abbr[input_date.month]
             else:
                 day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendas " + months_acc[input_date.month]
     
