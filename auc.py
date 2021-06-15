@@ -1,10 +1,12 @@
 # this script requires python 3.7+
 
 import datetime, calendar, math     # calculating dates
-import json, urllib.request         # getting and parsing sunrise/set data
-import sys                          # commandline arguments
+import json, urllib.request
+from ssl import ALERT_DESCRIPTION_CERTIFICATE_EXPIRED         # getting and parsing sunrise/set data
+import sys                          # for logging to stdout
 import os                           # get start dir
 import logging                      # debugging
+import argparse                     # commandline arguments
 
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
@@ -18,8 +20,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 start_dir = os.path.dirname(os.path.realpath(__file__))
-
-help_text = "Converts dates into a Roman format\n\t--help\t\tshows this help text\n\t--now\t\tconvert current date and time\n\t--custom\t\tconvert a custom date (ISO 8601)\n\t--simple\t\tonly print the Roman format"
 
 # roman months in the accusative form
 months_acc = ["Januarias", "Februarias", "Martias", "Apriles", "Majas", "Junias", "Quintiles", "Sextiles", "Septembres", "Octobres", "Novembres", "Decembres"]
@@ -210,7 +210,7 @@ def get_time(input_date):
                     jsondata = json.loads(data)
             except:
                 logger.debug("No internet access and no fallback data files")
-                print("No internet access and no fallback data files, program exiting...")
+                logger.info("No internet access and no fallback data files, program exiting...")
                 exit()
 
     sunrise = datetime.datetime.fromisoformat(jsondata["results"]["sunrise"])
@@ -257,57 +257,51 @@ def get_time(input_date):
     # the get_date() function must check if there is a --idiomatic argument, ideally the definition of the get_date() function
     # would be something like: def get_date(input_date, idiomatic = True)
 
-output = {}
+# parse commandline input - default output if no options is current date and time
 
-if len(sys.argv) < 2:
-    print(help_text)
-else:
-    if "--help" in sys.argv:
-        output["help"] = help_text
-    elif "--now" in sys.argv:
-        input_date = datetime.datetime.now()
-        if "--json" not in sys.argv:
-            output["normal"] = input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD")
-            output["roman"] = get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
-        else:
-            output["data"] = json.dumps({
+parser = argparse.ArgumentParser(description="Converts dates and times into a Roman format")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--simple", help="only print the Roman format", action="store_true")
+group.add_argument("--json", help="output in JSON for portability", action="store_true")
+parser.add_argument("--custom", help="convert a custom date e.g. 2000-01-23 (ISO 8601)")
+args = parser.parse_args()
+
+input_date = datetime.datetime.now()
+
+if args.custom:
+    # TODO custom time not supported
+    try:
+        input_date = datetime.datetime.fromisoformat(args.custom)
+    except:
+        # TODO dates before AD 1 (i.e. 1 BC and earlier) are refused
+        # TODO dates after 9999-12-13 are not supported by the datetime library :(
+        logger.error("Custom date not in ISO 8601 format")
+        sys.exit()
+
+if args.json:
+    print(json.dumps({
                 "normal": {
                     "time": input_date.strftime("%H:%M"),
                     "day": input_date.strftime("%A"),
-                    "date": input_date.strftime(f"{input_date.day} %B %Y AD")
+                    "date": input_date.strftime(f"{input_date.day} %B"),
+                    "year": input_date.strftime("%Y")
                 },
                 "roman": {
                     "time": get_time(input_date),
                     "day": get_day(input_date),
                     "date": get_date(input_date),
-                    "year": get_year(input_date) + " AUC"
+                    "year": get_year(input_date)
                 }
-            })
-    if "--custom" in sys.argv:
-        try:
-            test = output["normal"]
-            print("Please use either --now or --custom date")
-            sys.exit()
-        except KeyError:
-            # TODO custom time not supported
-            try:
-                input_date = datetime.datetime.fromisoformat(sys.argv[sys.argv.index("--custom") + 1])
-            except:
-                # TODO dates before AD 1 (i.e. 1 BC and earlier) are refused
-                # TODO dates after 9999-12-13 are not supported by the datetime library :(
-                print("Date not in ISO 8601 format")
-                sys.exit()
-            output["normal"] = input_date.strftime(f"%A {input_date.day} %B %Y AD")
-            output["roman"] = get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC"
-    
-    if "--simple" in sys.argv:
-        try:
-            output.pop("normal")
-        except:
-            print("Please select either a normal or custom date")
-            sys.exit()
-    if output == {}:
-        output["help"] = help_text
-
-    for x in output:
-        print(output[x])
+            }))
+else:
+    if args.simple and args.custom:
+        print(get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC")
+    elif args.custom:
+        # only print out date without time, because custom time not done yet
+        print(input_date.strftime(f"%A, {input_date.day} %B %Y AD"))
+        print(get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC")
+    elif args.simple:
+        print(get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC")
+    else:
+        print(input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD"))
+        print(get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date) + "\n" + get_year(input_date) + " AUC")
