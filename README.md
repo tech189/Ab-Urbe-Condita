@@ -2,29 +2,50 @@
 
 A small program to convert times and dates into the Roman system.
 
-Call `auc.py` with the following arguments:
+Run `auc.py` with no arguments to output current date and time or use the following arguments:
 
 ```text
---help      shows this help text
---now       convert current date and time
---custom    convert a custom date (ISO 8601)
---simple    only print the Roman format
+--json          output in JSON for portability
+--simple        only print the Roman format
+--idiomatic     abbreviated dates to be more idiomatic
+--custom        convert a custom date (ISO 8601)
+--debug         print calculations etc. for debugging
 ```
 
 For example:
 
 ```text
-python auc.py --now
+python3 auc.py
     23:27, Thursday, 13 June 2019 AD
-    hora II post solis occasum, dies Iovis, Idus Junii MMDCCLXXII AUC
+    hora II post solis occasum
+    dies Iovis
+    Idus Junias
+    MMDCCLXXII AUC
 ```
 
 To use a custom date, you must use the ISO 8601 format, for example:
 
 ```text
-python auc.py --custom 1234-05-06
-    06 May 1234 AD
-    dies Saturni, diem II ante Nonas Maii MCMLXXXVII AUC
+python3 auc.py --custom 1234-05-06
+    Saturday, 6 May 1234 AD
+    dies Saturni
+    pridie Nonas Majas
+    MCMLXXXVII AUC
+```
+
+To use the data in other programs, simply use the `--json` argument:
+
+```json
+python3 auc.py --json
+    {"normal": {"time": "00:21", "day": "Thursday", "date": "17 June", "year": "2021"}, "roman": {"time": "hora IV ante solis ortum", "day": "dies Jovis", "date": "ante diem XV Kalendas Quintiles", "idiomatic_date": "a.d. XV Kal. Qui.", "year": "MMDCCLXXIV"}}
+```
+
+Or, if you're writing in Python, you could `import` it in your program:
+
+```python
+>>> import auc, datetime
+>>> print("hodie est " + auc.get_day(datetime.datetime.now()) + "!")
+hodie est dies Jovis!
 ```
 
 ## Widgets!
