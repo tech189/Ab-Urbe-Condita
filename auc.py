@@ -16,15 +16,17 @@ logger.addHandler(handler)
 
 start_dir = os.path.dirname(os.path.realpath(__file__))
 
-# roman months in the accusative form
+# roman months in the accusative plural
 months_acc = ["Iānuāriās", "Februāriās", "Martiās", "Aprīlēs", "Māiās", "Iūniās", "Quīntīlēs", "Sextīlēs", "Septembrēs", "Octōbrēs", "Nouembrēs", "Decembrēs"]
 months_acc_greg = ["Jānuāriās", "Februāriās", "Martiās", "Aprīlēs", "Māiās", "Jūniās", "Jūliās", "Augustās", "Septembrēs", "Octōbrēs", "Novembrēs", "Decembrēs"]
 
-# TODO: ablative months greg and not
+# roman months in the ablative plural
+months_abl = ["Iānuāriīs", "Februāriīs", "Martiīs", "Aprīlibus", "Māiīs", "Iūniīs", "Quīntīlibus", "Sextīlibus", "Septembribus", "Octōbribus", "Nouembribus", "Decembribus"]
+months_abl_greg = ["Jānuāriīs", "Februāriīs", "Martiīs", "Aprīlibus", "Māiīs", "Jūniīs", "Jūliīs", "Augustīs", "Septembribus", "Octōbribus", "Nouembribus", "Decembribus"]
 
 # idiomatic abbreviations:
-months_acc_abbr = ["Iān.", "Feb.", "Mar.", "Apr.", "Maī.", "Iūn.", "Quī.", "Sex.", "Sep.", "Oct.", "Nou.", "Dec."]
-months_acc_greg_abbr = ["Jān.", "Feb.", "Mar.", "Apr.", "Maī.", "Jūn.", "Jūl.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
+months_abbr = ["Iān.", "Feb.", "Mar.", "Apr.", "Maī.", "Iūn.", "Quī.", "Sex.", "Sep.", "Oct.", "Nou.", "Dec."]
+months_greg_abbr = ["Jān.", "Feb.", "Mar.", "Apr.", "Maī.", "Jūn.", "Jūl.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
 
 weekdays = ["Lūnae", "Mārtis", "Mercuriī", "Iovis", "Veneris", "Saturnī", "Sōlis"]
 
@@ -104,33 +106,33 @@ def get_date(input_date: datetime.datetime, idiomatic: bool):
         
         if idiomatic:
             if input_date.day == 1:
-                day = "Kal. " + months_acc_abbr[input_date.month - 1]
+                day = "Kal. " + months_abbr[input_date.month - 1]
             
             elif input_date.day < nones.day - 1:
-                day = "a.d. " + int_to_roman(abs(nones_delta.days) + 1) + " Nōn. " + months_acc_abbr[input_date.month - 1]
+                day = "a.d. " + int_to_roman(abs(nones_delta.days) + 1) + " Nōn. " + months_abbr[input_date.month - 1]
             elif input_date.day == nones.day - 1:
-                day = "prīd. Nōn. " + months_acc_abbr[input_date.month - 1]
+                day = "prīd. Nōn. " + months_abbr[input_date.month - 1]
             elif input_date.day == nones.day:
-                day = "Nōn. " + months_acc_abbr[input_date.month - 1]
+                day = "Nōn. " + months_abbr[input_date.month - 1]
             
             elif input_date.day < ides.day - 1:
-                day = "a.d. " + int_to_roman(abs(ides_delta.days) + 1) + " Īd. " + months_acc_abbr[input_date.month - 1]
+                day = "a.d. " + int_to_roman(abs(ides_delta.days) + 1) + " Īd. " + months_abbr[input_date.month - 1]
             elif input_date.day == ides.day - 1:
-                day = "prīd. Īd. " + months_acc_abbr[input_date.month - 1]
+                day = "prīd. Īd. " + months_abbr[input_date.month - 1]
             elif input_date.day == ides.day:
-                day = "Īd. " + months_acc_abbr[input_date.month - 1]
+                day = "Īd. " + months_abbr[input_date.month - 1]
 
             # if last day of month (works for leap years!)
             elif input_date.day == calendar.monthrange(input_date.year, input_date.month)[1]:
                 if input_date.month == 12:
-                    day = "prīd. Kal. " + months_acc_abbr[0]
+                    day = "prīd. Kal. " + months_abbr[0]
                 else:
-                    day = "prīd. Kal. " + months_acc_abbr[input_date.month] 
+                    day = "prīd. Kal. " + months_abbr[input_date.month] 
             
             # loop back to January if counting days until next month in December and leap year check
             else:
                 if input_date.month == 12:
-                    day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[0]
+                    day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_abbr[0]
                 elif input_date.month == 2 and input_date.day == 24:
                     try:
                         # try for leap year
@@ -138,29 +140,29 @@ def get_date(input_date: datetime.datetime, idiomatic: bool):
                         day = "a.d. bis VI Kal. Mar."
                     except ValueError:
                         # not a leap year
-                        day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
+                        day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_abbr[input_date.month]
                 else:
-                    day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_acc_abbr[input_date.month]
+                    day = "a.d. " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kal. " + months_abbr[input_date.month]
 
         # if the user does not want an idiomatic date:
         # probably a shorter way to do this but ¯\_(ツ)_/¯
         else:
             if input_date.day == 1:
-                day = "Kalendīs " + months_acc[input_date.month - 1]
+                day = "Kalendīs " + months_abl[input_date.month - 1]
             
             elif input_date.day < nones.day - 1:
                 day = "ante diem " + int_to_roman(abs(nones_delta.days) + 1) + " Nōnās " + months_acc[input_date.month - 1]
             elif input_date.day == nones.day - 1:
                 day = "prīdiē Nōnās " + months_acc[input_date.month - 1]
             elif input_date.day == nones.day:
-                day = "Nōnīs " + months_acc[input_date.month - 1]
+                day = "Nōnīs " + months_abl[input_date.month - 1]
             
             elif input_date.day < ides.day - 1:
                 day = "ante diem " + int_to_roman(abs(ides_delta.days) + 1) + " Idus " + months_acc[input_date.month - 1]
             elif input_date.day == ides.day - 1:
                 day = "prīdiē Idus " + months_acc[input_date.month - 1]
             elif input_date.day == ides.day:
-                day = "Īdibus " + months_acc[input_date.month - 1]
+                day = "Īdibus " + months_abl[input_date.month - 1]
 
             # if last day of month (works for leap years!)
             elif input_date.day == calendar.monthrange(input_date.year, input_date.month)[1]:
@@ -180,7 +182,7 @@ def get_date(input_date: datetime.datetime, idiomatic: bool):
                         day = "ante diem bis VI Kalendās Martiās"
                     except ValueError:
                         # not a leap year
-                        day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_acc_abbr[input_date.month]
+                        day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_abbr[input_date.month]
                 else:
                     day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_acc[input_date.month]
         
