@@ -6,6 +6,7 @@ import sys                          # for logging to stdout
 import os                           # caching sunrise/set data
 import logging                      # debugging
 import argparse                     # commandline arguments
+import unicodedata                  # remove macrons
 
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
@@ -29,6 +30,10 @@ months_abbr = ["Iān.", "Feb.", "Mar.", "Apr.", "Maī.", "Iūn.", "Quī.", "Sex.
 months_greg_abbr = ["Jān.", "Feb.", "Mar.", "Apr.", "Maī.", "Jūn.", "Jūl.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
 
 weekdays = ["Lūnae", "Mārtis", "Mercuriī", "Iovis", "Veneris", "Saturnī", "Sōlis"]
+
+def remove_macrons(str):
+    result = unicodedata.normalize("NFKD", str).encode("ascii", "ignore").decode()
+    return result
 
 def int_to_roman(num):
     # shamelessly stolen from https://stackoverflow.com/a/50012689
@@ -70,14 +75,17 @@ def get_year(input_date: datetime.datetime):
     else:
         logger.error("Input was not a datetime.datetime object")
 
-def get_day(input_date):
+def get_day(input_date, macron_pref):
     if isinstance(input_date, datetime.datetime):
         result = "diēs " + weekdays[input_date.weekday()]
-        return result
+        if macron_pref:
+            return remove_macrons(result)
+        else:
+            return result
     else:
         logger.error("Input was not a datetime.datetime object")
 
-def get_date(input_date: datetime.datetime, idiomatic: bool):
+def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
     if isinstance(input_date, datetime.datetime) and isinstance(idiomatic, bool):
         kalends = input_date.replace(day=1)
 
@@ -186,11 +194,14 @@ def get_date(input_date: datetime.datetime, idiomatic: bool):
                 else:
                     day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_acc[input_date.month]
         
-        return day
+        if macron_pref:
+            return remove_macrons(day)
+        else:
+            return day
     else:
         logger.error("Input date was not a datetime.datetime object or idiomatic was not a boolean")
 
-def get_time(input_date):
+def get_time(input_date, macron_pref):
     # get sunrise/sunset from internet, then work out length of hour
 
     if isinstance(input_date, datetime.datetime):
@@ -262,7 +273,10 @@ def get_time(input_date):
             hour = int_to_roman(math.floor(abs(afternoon_portion/hour_length)) + 1)
             time = "hōra " + hour + " post sōlis occasum"
         
-        return time
+        if macron_pref:
+            return remove_macrons(time)
+        else:
+            return time
     else:
         logger.error("Input date was not a datetime.datetime object")
 
@@ -273,6 +287,7 @@ if __name__ == "__main__":
     group.add_argument("--json", help="output in JSON for portability", action="store_true")
     group.add_argument("--simple", help="only print the Roman format", action="store_true")
     parser.add_argument("--idiomatic", help="abbreviated dates to be more idiomatic", action="store_true")
+    parser.add_argument("--no-macrons", help="print without any long vowel marks", action="store_true")
     parser.add_argument("--custom", help="convert a custom date e.g. 2000-01-23 (ISO 8601)")
     parser.add_argument("--debug", help="print calculations etc. for debugging", action="store_true")
     args = parser.parse_args()
@@ -286,6 +301,11 @@ if __name__ == "__main__":
         idiom_pref = True
     else:
         idiom_pref = False
+    
+    if args.no_macrons:
+        macron_pref = True
+    else:
+        macron_pref = False
 
     if args.custom:
         # TODO custom time not supported
@@ -308,22 +328,22 @@ if __name__ == "__main__":
                         "year": input_date.strftime("%Y")
                     },
                     "roman": {
-                        "time": get_time(input_date),
-                        "day": get_day(input_date),
-                        "date": get_date(input_date, idiomatic=False),
-                        "idiomatic_date": get_date(input_date, idiomatic=True),
+                        "time": get_time(input_date, macron_pref),
+                        "day": get_day(input_date, macron_pref),
+                        "date": get_date(input_date, macron_pref, idiomatic=False),
+                        "idiomatic_date": get_date(input_date, macron_pref, idiomatic=True),
                         "year": get_year(input_date)
                     }
-                }))
+                }, ensure_ascii=False))
     else:
         if args.simple and args.custom:
-            print(get_day(input_date) + "\n" + get_date(input_date, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
         elif args.custom:
             # only print out date without time, because custom time not done yet
             print(input_date.strftime(f"%A, {input_date.day} %B %Y AD"))
-            print(get_day(input_date) + "\n" + get_date(input_date, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
         elif args.simple:
-            print(get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
         else:
             print(input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD"))
-            print(get_time(input_date) + "\n" + get_day(input_date) + "\n" + get_date(input_date, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
