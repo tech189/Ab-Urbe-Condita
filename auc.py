@@ -23,7 +23,7 @@ months_acc_greg = ["Jānuāriās", "Februāriās", "Martiās", "Aprīlēs", "Mā
 
 # roman months in the ablative plural
 months_abl = ["Iānuāriīs", "Februāriīs", "Martiīs", "Aprīlibus", "Māiīs", "Iūniīs", "Quīntīlibus", "Sextīlibus", "Septembribus", "Octōbribus", "Nouembribus", "Decembribus"]
-months_abl_greg = ["Jānuāriīs", "Februāriīs", "Martiīs", "Aprīlibus", "Māiīs", "Jūniīs", "Jūliīs", "Augustīs", "Septembribus", "Octōbribus", "Nouembribus", "Decembribus"]
+months_abl_greg = ["Jānuāriīs", "Februāriīs", "Martiīs", "Aprīlibus", "Māiīs", "Jūniīs", "Jūliīs", "Augustīs", "Septembribus", "Octōbribus", "Novembribus", "Decembribus"]
 
 # idiomatic abbreviations:
 months_abbr = ["Iān.", "Feb.", "Mar.", "Apr.", "Maī.", "Iūn.", "Quī.", "Sex.", "Sep.", "Oct.", "Nou.", "Dec."]
@@ -58,9 +58,88 @@ def int_to_roman(num):
     logging.debug(f"{num} --> {result}")
     return result
 
-def get_year(input_date: datetime.datetime):
+def int_to_latin(num, ending, mode):
+    # coverts integers to the written-out Latin cardinal or ordinal words
+    # sources:
+    # https://dcc.dickinson.edu/grammar/latin/cardinal-and-ordinal-numbers
+    # https://dcc.dickinson.edu/grammar/latin/numeral-adverbs
+
+    ordinals_stem = ["prīm-", "secund-", "terti-", "quārt-", "quīnt-", "sext-", "septim-", "octāv-", "nōn-", "decim-", "ūndecim-", "duodecim-", "terti- decim-", "quārt- decim-", "quīnt- decim-", "sext- decim-", "septim- decim-", "duodēvīcēsim-", "undēvīcēsim-"]
+    ordinals_tens_stem = ["decim-", "vīcēsim-", "trīcēsim-", "quadrāgēsim-", "quīnquāgēsim-", "sexāgēsim-", "septuāgēsim-", "octōgēsim-", "nōnāgēsim-"]
+    ordinals_hundreds_stem = ["centēsim-", "ducentēsim-", "trecentēsim-", "quadringentēsim-", "quīngentēsim-", "sescentēsim-", "septingentēsim-", "octingentēsim-", "nōngentēsim-"]
+
+    numeral_adverbs = ["semel", "bis", "ter", "quater", "quīnquiēns", "sexiēns", "septiēns", "octiēns", "noviēns", "deciēns", "ūndeciēns", "duodeciēns", "terdeciēns", "quaterdeciēns", "quīndeciēns", "sēdeciēns", "septiēsdeciēns", "duodēvīciēns", "ūndēvīciēns"]
+    numeral_adverbs_tens = ["deciēns", "vīciēns", "trīciēns", "quadrāgiēns", "quīnquāgiēns", "sexāgiēns", "septuāgiēns", "octōgiēns", "nōnāgiēns"]
+    numeral_adverbs_hundreds = ["centiēns", "ducentiēns", "trecentiēns", "quadringentiēns", "quīngentiēns", "sescentiēns", "septingentiēns", "octingentiēns", "nōngentiēns"]
+
+    # for debugging
+    num_int = num
+    
+    if mode == "cardinal":
+        result = "not yet implemented"
+    elif mode == "ordinal":
+        result = ""
+        while num > 0:
+            # thousands
+            # TODO ordinals above 19999
+            if num % 1000 == 0:
+                result = result + numeral_adverbs[math.floor(num/1000)-1] + " mīllēnsim-".replace("-", ending)
+                result = result.replace("semel ", "")
+                num = 0
+            elif num > 999:
+                result = result + numeral_adverbs[math.floor(num/1000)-1] + " mīllēnsim- et ".replace("-", ending)
+                result = result.replace("semel ", "")
+                num = num - (math.floor(num/1000))*1000
+                continue
+
+            # hundreds
+            elif num % 100 == 0:
+                result = result + ordinals_hundreds_stem[math.floor(num/100)-1].replace("-", ending)
+                num = 0
+            elif num > 99:
+                result = result + ordinals_hundreds_stem[math.floor(num/100)-1].replace("-", ending) + " "
+                num = num - (math.floor(num/100))*100
+                continue
+            
+            # tens
+            elif num < 20:
+                result = result + ordinals_stem[num-1].replace("-", ending)
+                num = 0
+
+            elif num < 100:
+                if num % 10 == 0:
+                    result = result + ordinals_tens_stem[math.floor(num/10)-1].replace("-", ending)
+                    num = 0
+                else:
+                    result = result + ordinals_tens_stem[math.floor(num/10)-1].replace("-", ending) + " " + ordinals_stem[(num%10)-1].replace("-", ending)
+                    num = 0
+
+
+        # only works for numbers below 1000:
+
+        # if num < 20:
+        #     result = ordinals_stem[num-1].replace("-", ending)
+
+        # elif num < 100:
+        #     if num % 10 == 0:
+        #         result = ordinals_tens_stem[math.floor(num/10)-1].replace("-", ending)
+        #     else:
+        #         result = ordinals_tens_stem[math.floor(num/10)-1].replace("-", ending) + " " + ordinals_stem[(num%10)-1].replace("-", ending)
+        
+        # elif num < 1000:
+        #     if num % 10 == 0:
+        #         result = ordinals_hundreds_stem[math.floor(num/100)-1].replace("-", ending)
+        #     else:
+        #         result = ordinals_hundreds_stem[math.floor(num/100)-1].replace("-", ending) + " " + ordinals_tens_stem[math.floor(num/10)-1].replace("-", ending) + " " + ordinals_stem[(num%10)-1].replace("-", ending)
+
+
+    logging.debug(f"{num_int} as {mode} --> {result}")
+    return result
+
+def get_year(input_date: datetime.datetime, idiomatic: bool):
     if isinstance(input_date, datetime.datetime):
         # AUC = 21 April 752 BC
+        # double check this date: https://dcc.dickinson.edu/grammar/latin/reckoning-time
 
         if input_date.month == 4 and input_date.day < 21:
             auc = input_date.year + 752
@@ -71,7 +150,10 @@ def get_year(input_date: datetime.datetime):
         elif input_date.month > 4:
             auc = input_date.year + 753
         
-        return int_to_roman(auc)
+        if idiomatic:
+            return "annō " + int_to_roman(auc) + " a.u.c."
+        else:
+            return "annō " + int_to_latin(auc, "ō", "ordinal") + " ab urbe conditā"
     else:
         logger.error("Input was not a datetime.datetime object")
 
@@ -159,14 +241,14 @@ def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
                 day = "Kalendīs " + months_abl[input_date.month - 1]
             
             elif input_date.day < nones.day - 1:
-                day = "ante diem " + int_to_roman(abs(nones_delta.days) + 1) + " Nōnās " + months_acc[input_date.month - 1]
+                day = "ante diem " + int_to_latin(abs(nones_delta.days) + 1, "um", "ordinal") + " Nōnās " + months_acc[input_date.month - 1]
             elif input_date.day == nones.day - 1:
                 day = "prīdiē Nōnās " + months_acc[input_date.month - 1]
             elif input_date.day == nones.day:
                 day = "Nōnīs " + months_abl[input_date.month - 1]
             
             elif input_date.day < ides.day - 1:
-                day = "ante diem " + int_to_roman(abs(ides_delta.days) + 1) + " Idus " + months_acc[input_date.month - 1]
+                day = "ante diem " + int_to_latin(abs(ides_delta.days) + 1, "um", "ordinal") + " Idus " + months_acc[input_date.month - 1]
             elif input_date.day == ides.day - 1:
                 day = "prīdiē Idus " + months_acc[input_date.month - 1]
             elif input_date.day == ides.day:
@@ -182,17 +264,17 @@ def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
             # loop back to January if counting days until next month in December and leap year check
             else:
                 if input_date.month == 12:
-                    day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_acc[0]
+                    day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_acc[0]
                 elif input_date.month == 2 and input_date.day == 24:
                     try:
                         # try for leap year
                         input_date.replace(day=29)
-                        day = "ante diem bis VI Kalendās Martiās"
+                        day = "ante diem bis sextum Kalendās Martiās"
                     except ValueError:
                         # not a leap year
-                        day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_abbr[input_date.month]
+                        day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_abbr[input_date.month]
                 else:
-                    day = "ante diem " + int_to_roman(abs(kalends2_delta.days) + 1) + " Kalendās " + months_acc[input_date.month]
+                    day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_acc[input_date.month]
         
         if macron_pref:
             return remove_macrons(day)
@@ -255,22 +337,22 @@ def get_time(input_date, macron_pref):
         logger.debug(f"\n Hour length:      {hour_length}\n Midday:           {midday}\n Morning length:   {morning_portion}\n Afternoon length: {afternoon_portion}")
 
         if input_date < sunrise:
-            hour = int_to_roman(math.floor(abs(morning_portion/hour_length)) + 1)
+            hour = int_to_latin(math.floor(abs(morning_portion/hour_length)) + 1, "a", "ordinal")
             time = "hōra " + hour + " ante sōlis ortum"
         elif input_date == sunrise:
             time = "sōlis ortus"
         elif input_date < midday:
-            hour = int_to_roman(math.floor(morning_portion/hour_length) + 1)
+            hour = int_to_latin(math.floor(morning_portion/hour_length) + 1, "a", "ordinal")
             time = "hōra " + hour + " post sōlis ortum"
         elif input_date == midday:
             time = "merīdiēs"
         elif input_date < sunset:
-            hour = int_to_roman(math.floor(afternoon_portion/hour_length) + 1)
+            hour = int_to_latin(math.floor(afternoon_portion/hour_length) + 1, "a", "ordinal")
             time = "hōra " + hour + " ante sōlis occasum"
         elif input_date == sunset:
             time = "sōlis occasus"
         elif input_date > sunset:
-            hour = int_to_roman(math.floor(abs(afternoon_portion/hour_length)) + 1)
+            hour = int_to_latin(math.floor(abs(afternoon_portion/hour_length)) + 1, "a", "ordinal")
             time = "hōra " + hour + " post sōlis occasum"
         
         if macron_pref:
@@ -332,18 +414,19 @@ if __name__ == "__main__":
                         "day": get_day(input_date, macron_pref),
                         "date": get_date(input_date, macron_pref, idiomatic=False),
                         "idiomatic_date": get_date(input_date, macron_pref, idiomatic=True),
-                        "year": get_year(input_date)
+                        "year": get_year(input_date, idiomatic=False),
+                        "idiomatic_year": get_year(input_date, idiomatic=True)
                     }
                 }, ensure_ascii=False))
     else:
         if args.simple and args.custom:
-            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
         elif args.custom:
             # only print out date without time, because custom time not done yet
             print(input_date.strftime(f"%A, {input_date.day} %B %Y AD"))
-            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
         elif args.simple:
-            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
         else:
             print(input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD"))
-            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date) + " AUC")
+            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
