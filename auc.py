@@ -1,12 +1,13 @@
 # this script requires python 3.7+
 
-import datetime, calendar, math     # calculating dates
-import json, urllib.request         # getting and parsing sunrise/set data        
-import sys                          # for logging to stdout
-import os                           # caching sunrise/set data
-import logging                      # debugging
-import argparse                     # commandline arguments
-import unicodedata                  # remove macrons
+import datetime, calendar, math, pytz       # calculating dates
+import json                                 # outputting JSON
+import sys                                  # for logging to stdout
+from astral import LocationInfo             # getting long/lat for astral
+from astral.sun import sun                  # calculating sunrise/set data
+import logging                              # debugging
+import argparse                             # command line arguments
+import unicodedata                          # remove macrons
 
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
@@ -14,8 +15,6 @@ handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter("%(levelname)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
-start_dir = os.path.dirname(os.path.realpath(__file__))
 
 # roman months in the accusative plural
 months_acc = ["Iānuāriās", "Februāriās", "Martiās", "Aprīlēs", "Māiās", "Iūniās", "Quīntīlēs", "Sextīlēs", "Septembrēs", "Octōbrēs", "Nouembrēs", "Decembrēs"]
@@ -284,49 +283,17 @@ def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
         logger.error("Input date was not a datetime.datetime object or idiomatic was not a boolean")
 
 def get_time(input_date, macron_pref):
-    # get sunrise/sunset from internet, then work out length of hour
+    # calculate sunrise/sunset using astral, then work out length of hour - input must be UTC localised
 
     if isinstance(input_date, datetime.datetime):
-        # cache data for a whole day, then get new data when day changes
-        if not os.path.exists(os.path.join(start_dir, "cache")):
-            os.mkdir(os.path.join(start_dir, "cache"))
-        try:
-            logger.debug("Checking if today's data is cached")
-            with open(os.path.join(start_dir, "cache", "sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json"), "r", encoding="utf-8") as response:
-                data = response.read()
-                jsondata = json.loads(data)
-        except:
-            try:
-                # requests the data for the current day of timezone - ISO 8601 format
-                # TODO do not hardcode location - currently London
-                logger.debug("Getting data from internet")
-                response = urllib.request.urlopen("https://api.sunrise-sunset.org/json?lat=51.509865&lng=-0.118092&formatted=0&date=" + input_date.strftime("%Y-%m-%d"))
-                logger.debug("Writing data to file")
-                with open(os.path.join(start_dir, "cache", "sunrisesunset-" + input_date.strftime("%Y%m%d") + ".json"), "w", encoding="utf-8") as outfile:
-                    data = response.read().decode("utf-8")
-                    jsondata = json.loads(data)
-                    json.dump(jsondata, outfile)
-            except:
-                try:
-                    logger.debug("Trying to open yesterday's sunrise/set data since network probably down")
-                    yesterday = input_date - datetime.timedelta(days=1)
-                    with open(os.path.join(start_dir, "cache", "sunrisesunset-" + yesterday.strftime("%Y%m%d") + ".json"), "r", encoding="utf-8") as response:
-                        data = response.read()
-                        jsondata = json.loads(data)
-                except:
-                    logger.debug("No internet access and no fallback data files")
-                    logger.info("No internet access and no fallback data files, program exiting...")
-                    exit()
+        # TODO do not hardcode location - currently London
+        # TODO add cmdline argument to specify long/lat if city not in astral's db (https://latlong.net)
+        city = LocationInfo("London", "England", "Europe/London", 51.5, -0.116)
+        s = sun(city.observer, date=input_date)
 
-        sunrise = datetime.datetime.fromisoformat(jsondata["results"]["sunrise"])
-        local_timezone = datetime.datetime.now().astimezone().tzinfo
-        sunrise = sunrise.astimezone(local_timezone)
+        sunrise = s["sunrise"]
+        sunset = s["sunset"]
 
-        sunset = datetime.datetime.fromisoformat(jsondata["results"]["sunset"])
-        local_timezone = datetime.datetime.now().astimezone().tzinfo
-        sunset = sunset.astimezone(local_timezone)
-
-        input_date = input_date.replace(tzinfo=local_timezone)
         logger.debug(f"\n Input date: {input_date}\n Sunrise:    {sunrise}\n Sunset:     {sunset}")
 
         day_duration = sunset - sunrise
@@ -334,6 +301,7 @@ def get_time(input_date, macron_pref):
         midday = sunrise + (day_duration/2)
         morning_portion = input_date - sunrise
         afternoon_portion = sunset - input_date
+
         logger.debug(f"\n Hour length:      {hour_length}\n Midday:           {midday}\n Morning length:   {morning_portion}\n Afternoon length: {afternoon_portion}")
 
         if input_date < sunrise:
@@ -374,7 +342,8 @@ if __name__ == "__main__":
     parser.add_argument("--debug", help="print calculations etc. for debugging", action="store_true")
     args = parser.parse_args()
 
-    input_date = datetime.datetime.now()
+    # work with dates in UTC timezone
+    input_date = pytz.utc.localize(datetime.datetime.utcnow())
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
