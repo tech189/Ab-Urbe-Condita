@@ -1,13 +1,13 @@
 # this script requires python 3.7+
 
-import datetime, calendar, math, pytz       # calculating dates
-import json                                 # outputting JSON
-import sys                                  # for logging to stdout
-from astral import LocationInfo             # getting long/lat for astral
-from astral.sun import sun                  # calculating sunrise/set data
-import logging                              # debugging
-import argparse                             # command line arguments
-import unicodedata                          # remove macrons
+import datetime, calendar, math, pytz           # calculating dates
+import json                                     # outputting JSON
+import sys                                      # for logging to stdout
+from astral.geocoder import database, lookup    # getting long/lat for astral
+from astral.sun import sun                      # calculating sunrise/set data
+import logging                                  # debugging
+import argparse                                 # command line arguments
+import unicodedata                              # remove macrons
 
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
@@ -30,8 +30,8 @@ months_greg_abbr = ["Jān.", "Feb.", "Mar.", "Apr.", "Maī.", "Jūn.", "Jūl.", 
 
 weekdays = ["Lūnae", "Mārtis", "Mercuriī", "Iovis", "Veneris", "Saturnī", "Sōlis"]
 
-def remove_macrons(str):
-    result = unicodedata.normalize("NFKD", str).encode("ascii", "ignore").decode()
+def remove_macrons(string):
+    result = unicodedata.normalize("NFKD", string).encode("ascii", "ignore").decode()
     return result
 
 def int_to_roman(num):
@@ -282,13 +282,21 @@ def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
     else:
         logger.error("Input date was not a datetime.datetime object or idiomatic was not a boolean")
 
-def get_time(input_date, macron_pref):
+def get_time(input_date, location, macron_pref):
     # calculate sunrise/sunset using astral, then work out length of hour - input must be UTC localised
 
     if isinstance(input_date, datetime.datetime):
+        # work with dates in UTC timezone
+        input_date = pytz.utc.localize(input_date)
+
         # TODO do not hardcode location - currently London
         # TODO add cmdline argument to specify long/lat if city not in astral's db (https://latlong.net)
-        city = LocationInfo("London", "England", "Europe/London", 51.5, -0.116)
+        # TODO see what happens when you simulate program being run from another timezone, does it produce right output?
+
+        city = lookup(location, database())
+        logger.debug(f"\nLocation: {city}")
+        # LocationInfo("London", "England", "Europe/London", 51.5, -0.116)
+
         s = sun(city.observer, date=input_date)
 
         sunrise = s["sunrise"]
@@ -336,17 +344,23 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--json", help="output in JSON for portability", action="store_true")
     group.add_argument("--simple", help="only print the Roman format", action="store_true")
+    parser.add_argument("--location", help="set location for time calculations")
     parser.add_argument("--idiomatic", help="abbreviated dates to be more idiomatic", action="store_true")
     parser.add_argument("--no-macrons", help="print without any long vowel marks", action="store_true")
     parser.add_argument("--custom", help="convert a custom date e.g. 2000-01-23 (ISO 8601)")
     parser.add_argument("--debug", help="print calculations etc. for debugging", action="store_true")
     args = parser.parse_args()
 
-    # work with dates in UTC timezone
-    input_date = pytz.utc.localize(datetime.datetime.utcnow())
+    input_date = datetime.datetime.now()
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
+    
+    # TODO pytz.localise before calculating date, day, & time e.g. for timezones a whole day ahead/behind
+    if args.location:
+        location = args.location
+    else:
+        location = "London"
 
     if args.idiomatic:
         idiom_pref = True
@@ -395,7 +409,7 @@ if __name__ == "__main__":
             print(input_date.strftime(f"%A, {input_date.day} %B %Y AD"))
             print(get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
         elif args.simple:
-            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
+            print(get_time(input_date, location, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
         else:
             print(input_date.strftime(f"%H:%M, %A, {input_date.day} %B %Y AD"))
-            print(get_time(input_date, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
+            print(get_time(input_date, location, macron_pref) + "\n" + get_day(input_date, macron_pref) + "\n" + get_date(input_date, macron_pref, idiom_pref) + "\n" + get_year(input_date, idiom_pref))
