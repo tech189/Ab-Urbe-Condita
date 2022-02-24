@@ -272,7 +272,7 @@ def get_date(input_date: datetime.datetime, macron_pref, idiomatic: bool):
                         day = "ante diem bis sextum Kalendās Martiās"
                     except ValueError:
                         # not a leap year
-                        day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_abbr[input_date.month]
+                        day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_acc[input_date.month]
                 else:
                     day = "ante diem " + int_to_latin(abs(kalends2_delta.days) + 1, "um", "ordinal") + " Kalendās " + months_acc[input_date.month]
         
